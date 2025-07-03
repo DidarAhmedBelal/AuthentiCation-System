@@ -142,7 +142,7 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 
 
-WSGI_APPLICATION = 'myproject.wsgi.application'
+WSGI_APP = 'myproject.wsgi.application'
 
 
 # Database
