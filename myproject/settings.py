@@ -11,7 +11,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings')
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -22,7 +21,7 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = [".vercel.app", "127.0.0.1", "localhost"]
 
 
 AUTH_USER_MODEL = 'users.User'
