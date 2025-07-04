@@ -87,24 +87,22 @@ class LoginView(APIView):
             }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
 class SendOTPView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
         """
-        Generates and sends an OTP to the user's email for verification.
-
-        Rate Limiting:
-        - Max 5 OTPs per hour per user.
-        - Wait 60 seconds before requesting a new OTP.
+        Sends an OTP to the user's email.
+        - First-time request sends OTP immediately.
+        - Max 5 OTPs/hour/user.
+        - Wait 60 seconds between OTPs.
         """
         serializer = OTPSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
 
             try:
-                # Only fetch fields we need
                 user = User.objects.only(
                     'id', 'email', 'otp', 'otp_created_at',
                     'otp_request_count', 'otp_request_reset_time'
@@ -112,52 +110,47 @@ class SendOTPView(APIView):
 
                 now = timezone.now()
 
-                # Reset OTP request count if more than 1 hour has passed
+                # Reset OTP count if more than 1 hour passed
                 if not user.otp_request_reset_time or now > user.otp_request_reset_time + timedelta(hours=1):
                     user.otp_request_count = 0
                     user.otp_request_reset_time = now
-                    # No need to save here, it will be saved later with other updates
 
-                # Enforce request limits
+                # Rate limit: Max 5 OTP/hour
                 if user.otp_request_count >= 5:
                     return Response(
                         {'error': 'Too many OTP requests. Try again after 1 hour.'},
                         status=status.HTTP_429_TOO_MANY_REQUESTS
                     )
 
+                # 60-second wait check (only if OTP was previously sent)
                 if user.otp_created_at and now < user.otp_created_at + timedelta(seconds=60):
                     return Response(
                         {'error': 'Please wait 60 seconds before requesting a new OTP.'},
                         status=status.HTTP_429_TOO_MANY_REQUESTS
                     )
 
-                # Generate and store OTP
+                # Generate and send OTP
                 otp = str(random.randint(100000, 999999))
                 user.otp = otp
                 user.otp_created_at = now
                 user.otp_request_count += 1
-                # Use update_fields to only save the changed fields
                 user.save(update_fields=['otp', 'otp_created_at', 'otp_request_count', 'otp_request_reset_time'])
 
-                # Send the OTP
-                send_mail(
-                    subject='Your OTP Code',
-                    message=f'Your OTP code is {otp}',
-                    from_email=settings.EMAIL_HOST_USER,
-                    recipient_list=[email],
-                    fail_silently=False
-                )
+                try:
+                    send_mail(
+                        subject='Your OTP Code',
+                        message=f'Your OTP code is {otp}',
+                        from_email=settings.EMAIL_HOST_USER,
+                        recipient_list=[email],
+                        fail_silently=False
+                    )
+                except Exception as e:
+                    return Response({'error': 'Email Failed', 'detail': str(e)}, status=500)
 
-                return Response(
-                    {'message': 'OTP sent successfully', 'email': email},
-                    status=status.HTTP_200_OK
-                )
+                return Response({'message': 'OTP sent successfully', 'email': email}, status=status.HTTP_200_OK)
 
             except User.DoesNotExist:
-                return Response(
-                    {'error': 'User not found'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
+                return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -9,10 +9,10 @@ class User(AbstractUser):
 
     email = models.EmailField(unique=True)
     otp = models.CharField(max_length=6, blank=True, null=True)
-    is_varified = models.BooleanField(default=False)
-    otp_created_at = models.DateTimeField(null=False, blank=True, default=timezone.now)
+    is_verified = models.BooleanField(default=False)
+    otp_created_at = models.DateTimeField(null=True, blank=True, default=timezone.now)
     otp_request_count = models.IntegerField(default=0)
-    otp_request_reset_time = models.DateTimeField(default=timezone.now)
+    otp_request_reset_time = models.DateTimeField(blank=True, null=True)
 
     USERNAME_FIELD ='username'
     REQUIRED_FIELDS =['email']
