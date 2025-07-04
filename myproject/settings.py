@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'users',                    # Your custom user app
     'plans',                    # Your plans app
     'chat',                     # Your chat app
+    'about'                     # Your About app
 ]
 
 MIDDLEWARE = [

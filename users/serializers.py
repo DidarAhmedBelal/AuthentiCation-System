@@ -23,8 +23,6 @@ class UserSerializer(serializers.ModelSerializer):
             'email',
             'first_name',
             'last_name',
-            'sport_coach',
-            'details',
             'password',
             'is_verified',
             'profile_picture',  

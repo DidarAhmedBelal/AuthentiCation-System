@@ -16,15 +16,7 @@ class User(AbstractUser):
     otp_request_count = models.IntegerField(default=0)
     otp_request_reset_time = models.DateTimeField(blank=True, null=True)
 
-    sport_coach = models.CharField(
-        max_length=100,
-        help_text="What are you interested in? (e.g. Web Development, Freelancing, etc.)"
-    )
-    details = models.TextField(
-        help_text="Tell us about yourself, your goals, passions, or interests."
-    )
-
-
+   
     profile_picture = models.ImageField(
         upload_to=user_profile_upload_path,
         null=True,
@@ -32,7 +24,7 @@ class User(AbstractUser):
     )
 
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email', 'sport_coach', 'details']
+    REQUIRED_FIELDS = ['email']
 
     def __str__(self):
         return self.username

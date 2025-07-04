@@ -16,7 +16,7 @@ from chat.views import (
     MessageDetailView,
 )
 from plans.views import PlanListCreateView, PlanDetailView
-
+from about.views import AboutView, AboutCreateView
 router = DefaultRouter()
 router.register('users', UserList, basename='user-admin')
 
@@ -40,4 +40,7 @@ urlpatterns = [
 
     path('plans/', PlanListCreateView.as_view(), name='plan-list-create'),
     path('plans/<int:pk>/', PlanDetailView.as_view(), name='plan-detail'),
+
+    path('about/', AboutView.as_view(), name='user-about'),          
+    path('about/create/', AboutCreateView.as_view(), name='about-create'),  
 ]
