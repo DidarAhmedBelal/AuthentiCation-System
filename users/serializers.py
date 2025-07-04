@@ -1,27 +1,26 @@
 from rest_framework import serializers
-from .models import User
 from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for the User model.
-    Handles user creation (signup).
+    Handles user creation with proper password hashing.
     """
+    password = serializers.CharField(write_only=True, min_length=8)
+
     class Meta:
         model = User
-        # Fields to be included in the serialization/deserialization
-        fields = ['first_name', 'last_name', 'username', 'email', 'password']
-        # Extra keyword arguments for specific fields
+        fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
         extra_kwargs = {
-            'password': {'write_only': True}  # Password should only be written, not read back
+            'email': {'required': True},
+            'username': {'required': True},
         }
 
     def create(self, validated_data):
-        """
-        Custom create method to handle password hashing when creating a new user.
-        Uses Django's built-in create_user method for proper password management.
-        """
         return User.objects.create_user(**validated_data)
 
 
@@ -31,48 +30,58 @@ class LoginSerializer(serializers.Serializer):
     Validates username and password using Django's authenticate function.
     """
     username = serializers.CharField()
-    password = serializers.CharField(write_only=True)  # Password should only be written
+    password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        """
-        Custom validation method to authenticate the user.
-        Raises a ValidationError if authentication fails.
-        """
         username = data.get('username')
         password = data.get('password')
 
-        # Authenticate user using Django's built-in authentication system
         user = authenticate(username=username, password=password)
-
         if not user:
             raise serializers.ValidationError("Invalid username or password.")
+        if not user.is_active:
+            raise serializers.ValidationError("Account is inactive.")
 
-        # Attach the authenticated user object to the validated data
         data['user'] = user
         return data
 
 
 class OTPSerializer(serializers.Serializer):
     """
-    Serializer for sending OTP requests.
-    Requires only the user's email.
+    Serializer for requesting OTP via email.
     """
     email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("User with this email does not exist.")
+        return value
 
 
 class VerifyOTPSerializer(serializers.Serializer):
     """
-    Serializer for verifying OTPs.
-    Requires the user's email and the OTP code.
+    Serializer for verifying OTP codes.
     """
     email = serializers.EmailField()
-    otp = serializers.CharField()
+    otp = serializers.CharField(min_length=6, max_length=6)
+
+    def validate_otp(self, value):
+        if not value.isdigit():
+            raise serializers.ValidationError("OTP must be numeric.")
+        return value
 
 
 class ChangePasswordSerializer(serializers.Serializer):
     """
     Serializer for changing user passwords.
-    Requires the old password and the new password.
+    Requires the old password and a new password.
     """
-    old_password = serializers.CharField()
-    new_password = serializers.CharField()
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate_new_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(e.messages)
+        return value

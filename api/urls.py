@@ -1,27 +1,27 @@
 from django.urls import path
 from users.views import (
-    signup,
-    login_view,
-    send_otp,
-    verify_otp,
-    change_password,
-    my_profile,
-    user_list
+    SignupView,
+    LoginView,
+    SendOTPView,
+    VerifyOTPView,
+    ChangePasswordView,
+    MyProfileView,
+    UserListView,
 )
 
 urlpatterns = [
     # User authentication and registration
-    path('signup/', signup, name='signup'),
-    path('login/', login_view, name='login'),
+    path('signup/', SignupView.as_view(), name='signup'),
+    path('login/', LoginView.as_view(), name='login'),
 
     # OTP (One-Time Password) related endpoints
-    path('send-otp/', send_otp, name='send_otp'),
-    path('verify-otp/', verify_otp, name='verify_otp'),
+    path('send-otp/', SendOTPView.as_view(), name='send_otp'),
+    path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
 
     # Password management
-    path('change-password/', change_password, name='change_password'),
+    path('change-password/', ChangePasswordView.as_view(), name='change_password'),
 
     # User profile and list
-    path('profile/', my_profile, name='my_profile'),
-    path('users/', user_list, name='user_list'),
+    path('profile/', MyProfileView.as_view(), name='my_profile'),
+    path('users/', UserListView.as_view(), name='user_list'),
 ]
