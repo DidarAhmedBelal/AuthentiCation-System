@@ -156,7 +156,6 @@ WSGI_APPLICATION = 'myproject.wsgi.app'
 # }
 
 
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
