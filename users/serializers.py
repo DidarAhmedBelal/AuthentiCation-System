@@ -5,25 +5,52 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import User
 
 
+
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for the User model.
     Handles user creation with proper password hashing.
+    Explicitly defines fields for security and clarity.
     """
     password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
+        fields = [
+            'id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'topic',
+            'description',
+            'password',
+            'is_verified',  
+        ]
         extra_kwargs = {
             'email': {'required': True},
             'username': {'required': True},
             'password': {'write_only': True},
+            'is_verified': {'read_only': True},
         }
-        ref_name = 'CustomUserSerializer'  # Avoid swagger serializer name clash
+        ref_name = 'CustomUserSerializer'  
 
     def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)  
+        user.save()
+        return user
+    
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance   
+
 
 
 class LoginSerializer(serializers.Serializer):

@@ -1,6 +1,5 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from plans.views import PlanViewSet
 from users.views import (
     SignupView,
     LoginView,
@@ -8,30 +7,37 @@ from users.views import (
     VerifyOTPView,
     ChangePasswordView,
     MyProfileView,
-    UserListView,
+    UserList
 )
+from chat.views import (
+    ChatListCreateView,
+    ChatDetailView,
+    MessageListCreateView,
+    MessageDetailView,
+)
+from plans.views import PlanListCreateView, PlanDetailView
 
-
-# DRF router for PlanViewSet
 router = DefaultRouter()
-router.register('plans', PlanViewSet, basename='plan')
+router.register('users', UserList, basename='user-admin')
 
 urlpatterns = [
-    # API routes from PlanViewSet
     path('', include(router.urls)),
 
-    # User authentication and registration
     path('signup/', SignupView.as_view(), name='signup'),
     path('login/', LoginView.as_view(), name='login'),
 
-    # OTP related endpoints
     path('send-otp/', SendOTPView.as_view(), name='send_otp'),
     path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
 
-    # Password management
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),
 
-    # User profile and user list
     path('profile/', MyProfileView.as_view(), name='my_profile'),
-    path('users/', UserListView.as_view(), name='user_list'),
+
+    path('chats/', ChatListCreateView.as_view(), name='chat-list-create'),
+    path('chats/<int:pk>/', ChatDetailView.as_view(), name='chat-detail'),
+    path('messages/', MessageListCreateView.as_view(), name='message-list-create'),
+    path('messages/<int:pk>/', MessageDetailView.as_view(), name='message-detail'),
+
+    path('plans/', PlanListCreateView.as_view(), name='plan-list-create'),
+    path('plans/<int:pk>/', PlanDetailView.as_view(), name='plan-detail'),
 ]

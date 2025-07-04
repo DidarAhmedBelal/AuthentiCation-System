@@ -1,20 +1,15 @@
-from rest_framework import viewsets
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from django.utils import timezone
-
 from .models import Plan
 from .serializers import PlanSerializer
 
-
-class PlanViewSet(viewsets.ModelViewSet):
+class PlanListCreateView(generics.ListCreateAPIView):
     serializer_class = PlanSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
         if user.is_anonymous:
-            # Return empty queryset for unauthenticated access
             return Plan.objects.none()
 
         queryset = Plan.objects.filter(user=user).order_by('date')
@@ -28,7 +23,15 @@ class PlanViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        """
-        Automatically attach the logged-in user to the new plan.
-        """
         serializer.save(user=self.request.user)
+
+
+class PlanDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PlanSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_anonymous:
+            return Plan.objects.none()
+        return Plan.objects.filter(user=user)

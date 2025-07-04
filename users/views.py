@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.generics import (
     GenericAPIView,
     CreateAPIView,
@@ -18,6 +18,7 @@ from django.conf import settings
 from drf_spectacular.utils import extend_schema
 import random
 from datetime import timedelta
+from rest_framework import viewsets
 
 from .serializers import (
     UserSerializer,
@@ -31,10 +32,11 @@ from .serializers import (
 User = get_user_model()
 
 
-class UserListView(ListAPIView):
-    queryset = User.objects.all().only('id', 'username', 'email', 'first_name', 'last_name')
+
+class UserList(viewsets.ModelViewSet):
+    queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
 
 class SignupView(CreateAPIView):
