@@ -18,7 +18,9 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'email': {'required': True},
             'username': {'required': True},
+            'password': {'write_only': True},
         }
+        ref_name = 'CustomUserSerializer'  # Avoid swagger serializer name clash
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
@@ -44,6 +46,16 @@ class LoginSerializer(serializers.Serializer):
 
         data['user'] = user
         return data
+
+
+class LoginResponseSerializer(serializers.Serializer):
+    """
+    Serializer for the login response including JWT tokens.
+    """
+    message = serializers.CharField()
+    username = serializers.CharField()
+    access = serializers.CharField()
+    refresh = serializers.CharField()
 
 
 class OTPSerializer(serializers.Serializer):
