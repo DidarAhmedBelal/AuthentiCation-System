@@ -5,7 +5,8 @@ from rest_framework.generics import (
     GenericAPIView,
     CreateAPIView,
     RetrieveAPIView,
-    ListAPIView
+    ListAPIView,
+    RetrieveUpdateAPIView
 )
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
@@ -52,7 +53,7 @@ class SignupView(CreateAPIView):
         }, status=status.HTTP_201_CREATED)
 
 
-class MyProfileView(RetrieveAPIView):
+class MyProfileView(RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 

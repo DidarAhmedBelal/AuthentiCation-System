@@ -29,7 +29,7 @@ class PlanListCreateView(generics.ListCreateAPIView):
 class PlanDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PlanSerializer
     permission_classes = [IsAuthenticated]
-
+ 
     def get_queryset(self):
         user = self.request.user
         if user.is_anonymous:

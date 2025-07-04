@@ -13,6 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
     Explicitly defines fields for security and clarity.
     """
     password = serializers.CharField(write_only=True, min_length=8)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = User
@@ -25,7 +26,8 @@ class UserSerializer(serializers.ModelSerializer):
             'topic',
             'description',
             'password',
-            'is_verified',  
+            'is_verified',
+            'profile_picture',  # ✅ new field
         ]
         extra_kwargs = {
             'email': {'required': True},
@@ -33,15 +35,15 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {'write_only': True},
             'is_verified': {'read_only': True},
         }
-        ref_name = 'CustomUserSerializer'  
+        ref_name = 'CustomUserSerializer'
 
     def create(self, validated_data):
         password = validated_data.pop('password')
         user = User(**validated_data)
-        user.set_password(password)  
+        user.set_password(password)
         user.save()
         return user
-    
+
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)
         for attr, value in validated_data.items():
@@ -49,8 +51,7 @@ class UserSerializer(serializers.ModelSerializer):
         if password:
             instance.set_password(password)
         instance.save()
-        return instance   
-
+        return instance
 
 
 class LoginSerializer(serializers.Serializer):
