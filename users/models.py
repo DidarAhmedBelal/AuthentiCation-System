@@ -16,11 +16,11 @@ class User(AbstractUser):
     otp_request_count = models.IntegerField(default=0)
     otp_request_reset_time = models.DateTimeField(blank=True, null=True)
 
-    topic = models.CharField(
+    sport_coach = models.CharField(
         max_length=100,
         help_text="What are you interested in? (e.g. Web Development, Freelancing, etc.)"
     )
-    description = models.TextField(
+    details = models.TextField(
         help_text="Tell us about yourself, your goals, passions, or interests."
     )
 

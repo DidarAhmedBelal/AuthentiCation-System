@@ -20,6 +20,7 @@ from drf_spectacular.utils import extend_schema
 import random
 from datetime import timedelta
 from rest_framework import viewsets
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import (
     UserSerializer,

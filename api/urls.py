@@ -33,10 +33,10 @@ urlpatterns = [
 
     path('profile/', MyProfileView.as_view(), name='my_profile'),
 
-    path('chats/', ChatListCreateView.as_view(), name='chat-list-create'),
-    path('chats/<int:pk>/', ChatDetailView.as_view(), name='chat-detail'),
-    path('messages/', MessageListCreateView.as_view(), name='message-list-create'),
-    path('messages/<int:pk>/', MessageDetailView.as_view(), name='message-detail'),
+    path('chat-history/', ChatListCreateView.as_view(), name='chat-list-create'),
+    path('chat-history/<int:pk>/', ChatDetailView.as_view(), name='chat-detail'),
+    path('chat-detail/', MessageListCreateView.as_view(), name='message-list-create'),
+    path('chat-detail/<int:pk>/', MessageDetailView.as_view(), name='message-detail'),
 
     path('plans/', PlanListCreateView.as_view(), name='plan-list-create'),
     path('plans/<int:pk>/', PlanDetailView.as_view(), name='plan-detail'),

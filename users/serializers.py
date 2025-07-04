@@ -23,11 +23,11 @@ class UserSerializer(serializers.ModelSerializer):
             'email',
             'first_name',
             'last_name',
-            'topic',
-            'description',
+            'sport_coach',
+            'details',
             'password',
             'is_verified',
-            'profile_picture',  # ✅ new field
+            'profile_picture',  
         ]
         extra_kwargs = {
             'email': {'required': True},
