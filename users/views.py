@@ -143,8 +143,6 @@ class SendOTPView(GenericAPIView):
 
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=404)
-        
-#dfd
 
 class VerifyOTPView(GenericAPIView):
     serializer_class = VerifyOTPSerializer
