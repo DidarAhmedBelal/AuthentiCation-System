@@ -57,8 +57,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',  #  Required for Google login
-
+    'allauth.socialaccount.providers.google',  
     # Your custom apps
     'users',
     'plans',
@@ -87,21 +86,21 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         'AUTH_PARAMS': {'access_type': 'offline'},
     },
-    'facebook': {
-        'APP': {
-            'client_id': config('FB_CLIENT_ID', default=''),
-            'secret': config('FB_CLIENT_SECRET', default=''),
-            'key': ''
-        },
-        'METHOD': 'oauth2'
-    },
-    'apple': {
-        'APP': {
-            'client_id': config('APPLE_CLIENT_ID', default=''),
-            'secret': config('APPLE_SECRET', default=''),
-            'key': ''
-        },
-    }
+    # 'facebook': {
+    #     'APP': {
+    #         'client_id': config('FB_CLIENT_ID', default=''),
+    #         'secret': config('FB_CLIENT_SECRET', default=''),
+    #         'key': ''
+    #     },
+    #     'METHOD': 'oauth2'
+    # },
+    # 'apple': {
+    #     'APP': {
+    #         'client_id': config('APPLE_CLIENT_ID', default=''),
+    #         'secret': config('APPLE_SECRET', default=''),
+    #         'key': ''
+    #     },
+    # }
 }
 
 # print(SOCIALACCOUNT_PROVIDERS)
