@@ -5,7 +5,11 @@ from .serializers import ChatSerializer, MessageSerializer
 
 
 class ChatListCreateView(generics.ListCreateAPIView):
-    queryset = Chat.objects.all()
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Chat.objects.none()
+        return Chat.objects.filter(users=self.request.user)
+
     serializer_class = ChatSerializer
     permission_classes = [IsAuthenticated]
 
@@ -21,6 +25,9 @@ class MessageListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Message.objects.none()
+
         chat_id = self.request.query_params.get('chat_id')
         if chat_id:
             return Message.objects.filter(chat_id=chat_id, sender=self.request.user).order_by('timestamp')
@@ -32,4 +39,6 @@ class MessageDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Message.objects.none()
         return Message.objects.filter(sender=self.request.user)

@@ -9,9 +9,11 @@ class PlanListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        if not user.is_authenticated:  # 🔒 Swagger-safe
+            return Plan.objects.none()
+
         queryset = Plan.objects.filter(user=user).order_by('date')
 
-        # Optional date range filter
         start_date = self.request.query_params.get('start')
         end_date = self.request.query_params.get('end')
 
@@ -29,4 +31,6 @@ class PlanDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if not self.request.user.is_authenticated:  # 🔒 Swagger-safe
+            return Plan.objects.none()
         return Plan.objects.filter(user=self.request.user)
