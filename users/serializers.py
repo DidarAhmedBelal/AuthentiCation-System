@@ -96,6 +96,14 @@ class OTPSerializer(serializers.Serializer):
         return value
 
 
+class SendOTPResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+    email = serializers.EmailField()
+
+class ErrorResponseSerializer(serializers.Serializer):
+    error = serializers.CharField()
+    detail = serializers.CharField(required=False)
+
 class VerifyOTPSerializer(serializers.Serializer):
     """
     Serializer for verifying OTP codes.
@@ -107,6 +115,10 @@ class VerifyOTPSerializer(serializers.Serializer):
         if not value.isdigit():
             raise serializers.ValidationError("OTP must be numeric.")
         return value
+
+class VerifyOTPResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+    email = serializers.EmailField()
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -123,3 +135,8 @@ class ChangePasswordSerializer(serializers.Serializer):
         except DjangoValidationError as e:
             raise serializers.ValidationError(e.messages)
         return value
+
+
+class ChangePasswordResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+    full_name = serializers.CharField()

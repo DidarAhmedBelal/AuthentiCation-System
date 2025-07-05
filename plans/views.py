@@ -9,11 +9,9 @@ class PlanListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_anonymous:
-            return Plan.objects.none()
-
         queryset = Plan.objects.filter(user=user).order_by('date')
 
+        # Optional date range filter
         start_date = self.request.query_params.get('start')
         end_date = self.request.query_params.get('end')
 
@@ -29,9 +27,6 @@ class PlanListCreateView(generics.ListCreateAPIView):
 class PlanDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PlanSerializer
     permission_classes = [IsAuthenticated]
- 
+
     def get_queryset(self):
-        user = self.request.user
-        if user.is_anonymous:
-            return Plan.objects.none()
-        return Plan.objects.filter(user=user)
+        return Plan.objects.filter(user=self.request.user)
