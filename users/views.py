@@ -68,6 +68,7 @@ class MyProfileView(RetrieveUpdateAPIView):
 
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
     @swagger_auto_schema(
         request_body=LoginSerializer,
         responses={200: LoginResponseSerializer}
@@ -143,6 +144,9 @@ class SendOTPView(GenericAPIView):
 
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=404)
+
+
+# print("kldfdfdfjsdlkjfd")
 
 class VerifyOTPView(GenericAPIView):
     serializer_class = VerifyOTPSerializer

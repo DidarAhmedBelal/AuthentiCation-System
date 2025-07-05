@@ -4,11 +4,14 @@ import os
 import sys
 from decouple import config
 
+# print(type(config('DJANGO_SETTINGS_MODULE', default='')))
+
+# exit(0)
+
 def main():
     """Run administrative tasks."""
     os.environ.setdefault(
-        'DJANGO_SETTINGS_MODULE',
-        config('DJANGO_SETTINGS_MODULE', default='myproject.settings')
+        'DJANGO_SETTINGS_MODULE', 'myproject.settings'
     )
     try:
         from django.core.management import execute_from_command_line
