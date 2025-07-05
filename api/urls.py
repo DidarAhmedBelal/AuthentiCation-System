@@ -43,4 +43,5 @@ urlpatterns = [
 
     path('about/', AboutView.as_view(), name='user-about'),          
     path('about/create/', AboutCreateView.as_view(), name='about-create'),  
+
 ]

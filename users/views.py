@@ -21,6 +21,7 @@ import random
 from datetime import timedelta
 from rest_framework import viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_yasg.utils import swagger_auto_schema
 
 from .serializers import (
     UserSerializer,
@@ -28,7 +29,11 @@ from .serializers import (
     LoginResponseSerializer,
     OTPSerializer,
     VerifyOTPSerializer,
-    ChangePasswordSerializer
+    ChangePasswordSerializer, 
+    VerifyOTPResponseSerializer,
+    ChangePasswordResponseSerializer,
+    SendOTPResponseSerializer,
+    ErrorResponseSerializer
 )
 
 User = get_user_model()
@@ -62,17 +67,13 @@ class MyProfileView(RetrieveUpdateAPIView):
         return self.request.user
 
 
-class LoginView(GenericAPIView):
-    serializer_class = LoginSerializer
-    permission_classes = [AllowAny]
-
-    @extend_schema(
-        request=LoginSerializer,
-        responses={200: LoginResponseSerializer},
-        description="Login endpoint returning access and refresh JWT tokens."
+class LoginView(APIView):
+    @swagger_auto_schema(
+        request_body=LoginSerializer,
+        responses={200: LoginResponseSerializer}
     )
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data['user']
@@ -90,6 +91,15 @@ class SendOTPView(GenericAPIView):
     serializer_class = OTPSerializer
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        request_body=OTPSerializer,
+        responses={
+            200: SendOTPResponseSerializer,
+            404: ErrorResponseSerializer,
+            429: 'Too many OTP requests or wait before retry',
+            500: ErrorResponseSerializer,
+        }
+    )
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -133,12 +143,20 @@ class SendOTPView(GenericAPIView):
 
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=404)
+        
 
 
 class VerifyOTPView(GenericAPIView):
     serializer_class = VerifyOTPSerializer
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        request_body=VerifyOTPSerializer,
+        responses={
+            200: VerifyOTPResponseSerializer,
+            400: 'Invalid OTP or email / OTP expired'
+        }
+    )
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -159,12 +177,20 @@ class VerifyOTPView(GenericAPIView):
 
         except User.DoesNotExist:
             return Response({'error': 'Invalid OTP or email'}, status=400)
-
+        except User.DoesNotExist:
+            return Response({'error': 'Invalid OTP or email'}, status=400)
 
 class ChangePasswordView(GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        request_body=ChangePasswordSerializer,
+        responses={
+            200: ChangePasswordResponseSerializer,
+            400: 'Old password is incorrect or new password validation errors'
+        }
+    )
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
