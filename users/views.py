@@ -120,8 +120,8 @@ class SendOTPView(GenericAPIView):
             if user.otp_request_count >= 5:
                 return Response({'error': 'Too many OTP requests. Try again after 1 hour.'}, status=429)
 
-            if user.otp_created_at and now < user.otp_created_at + timedelta(seconds=60):
-                return Response({'error': 'Please wait 60 seconds before requesting a new OTP.'}, status=429)
+            # if user.otp_created_at and now < user.otp_created_at + timedelta(seconds=60):
+            #     return Response({'error': 'Please wait 60 seconds before requesting a new OTP.'}, status=429)
 
             otp = str(random.randint(100000, 999999))
             user.otp = otp
