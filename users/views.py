@@ -2,11 +2,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.generics import (
-    GenericAPIView,
     CreateAPIView,
-    RetrieveAPIView,
-    ListAPIView,
-    RetrieveUpdateAPIView
+    RetrieveUpdateAPIView,
+    GenericAPIView,
 )
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
@@ -16,20 +14,23 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
-from drf_spectacular.utils import extend_schema
 import random
 from datetime import timedelta
 from rest_framework import viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
-
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework import serializers
+from dj_rest_auth.registration.views import RegisterView
+from .serializers import CustomRegisterSerializer
 from .serializers import (
     UserSerializer,
     LoginSerializer,
     LoginResponseSerializer,
     OTPSerializer,
     VerifyOTPSerializer,
-    ChangePasswordSerializer, 
+    ChangePasswordSerializer,
     VerifyOTPResponseSerializer,
     ChangePasswordResponseSerializer,
     SendOTPResponseSerializer,
@@ -39,14 +40,20 @@ from .serializers import (
 User = get_user_model()
 
 
-
 class UserList(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited by admin users.
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
 
 
 class SignupView(CreateAPIView):
+    """
+    API endpoint for user registration.
+    Allows any user to create a new account.
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
@@ -60,15 +67,26 @@ class SignupView(CreateAPIView):
 
 
 class MyProfileView(RetrieveUpdateAPIView):
+    """
+    API endpoint for authenticated users to retrieve and update their own profile.
+    """
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
+        """
+        Returns the user object associated with the current request.
+        """
         return self.request.user
 
 
 class LoginView(APIView):
+    """
+    API endpoint for user login.
+    Returns JWT access and refresh tokens upon successful authentication.
+    """
     permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         request_body=LoginSerializer,
         responses={200: LoginResponseSerializer}
@@ -89,6 +107,10 @@ class LoginView(APIView):
 
 
 class SendOTPView(GenericAPIView):
+    """
+    API endpoint to send an OTP (One-Time Password) to a user's email.
+    Includes rate limiting to prevent abuse.
+    """
     serializer_class = OTPSerializer
     permission_classes = [AllowAny]
 
@@ -97,7 +119,7 @@ class SendOTPView(GenericAPIView):
         responses={
             200: SendOTPResponseSerializer,
             404: ErrorResponseSerializer,
-            429: 'Too many OTP requests or wait before retry',
+            429: 'Too many OTP requests. Try again after 1 hour.',
             500: ErrorResponseSerializer,
         }
     )
@@ -113,22 +135,23 @@ class SendOTPView(GenericAPIView):
             ).get(email=email)
 
             now = timezone.now()
+            # Reset OTP request count if more than 1 hour has passed since last reset time
             if not user.otp_request_reset_time or now > user.otp_request_reset_time + timedelta(hours=1):
                 user.otp_request_count = 0
                 user.otp_request_reset_time = now
 
+            # Enforce OTP request limit (e.g., 5 requests per hour)
             if user.otp_request_count >= 5:
                 return Response({'error': 'Too many OTP requests. Try again after 1 hour.'}, status=429)
 
-            # if user.otp_created_at and now < user.otp_created_at + timedelta(seconds=60):
-            #     return Response({'error': 'Please wait 60 seconds before requesting a new OTP.'}, status=429)
-
+            # Generate and save OTP
             otp = str(random.randint(100000, 999999))
             user.otp = otp
             user.otp_created_at = now
             user.otp_request_count += 1
             user.save(update_fields=['otp', 'otp_created_at', 'otp_request_count', 'otp_request_reset_time'])
 
+            # Send OTP email
             try:
                 send_mail(
                     subject='Your OTP Code',
@@ -138,7 +161,7 @@ class SendOTPView(GenericAPIView):
                     fail_silently=False
                 )
             except Exception as e:
-                return Response({'error': 'Email Failed', 'detail': str(e)}, status=500)
+                return Response({'error': 'Email sending failed', 'detail': str(e)}, status=500)
 
             return Response({'message': 'OTP sent successfully', 'email': email}, status=200)
 
@@ -146,9 +169,10 @@ class SendOTPView(GenericAPIView):
             return Response({'error': 'User not found'}, status=404)
 
 
-# print("kldfdfdfjsdlkjfd")
-
 class VerifyOTPView(GenericAPIView):
+    """
+    API endpoint to verify an OTP sent to a user's email.
+    """
     serializer_class = VerifyOTPSerializer
     permission_classes = [AllowAny]
 
@@ -167,11 +191,12 @@ class VerifyOTPView(GenericAPIView):
 
         try:
             user = User.objects.only('id', 'email', 'otp', 'otp_created_at', 'is_verified').get(email=email, otp=otp)
+            # Check if OTP has expired (e.g., 1 minute validity)
             if not user.otp_created_at or timezone.now() > user.otp_created_at + timedelta(minutes=1):
                 return Response({'error': 'OTP has expired'}, status=400)
 
             user.is_verified = True
-            user.otp = ''
+            user.otp = ''  # Clear OTP after successful verification
             user.otp_created_at = None
             user.save(update_fields=['is_verified', 'otp', 'otp_created_at'])
 
@@ -179,10 +204,13 @@ class VerifyOTPView(GenericAPIView):
 
         except User.DoesNotExist:
             return Response({'error': 'Invalid OTP or email'}, status=400)
-        except User.DoesNotExist:
-            return Response({'error': 'Invalid OTP or email'}, status=400)
+
 
 class ChangePasswordView(GenericAPIView):
+    """
+    API endpoint for authenticated users to change their password.
+    Requires the old password for verification.
+    """
     serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
 
@@ -201,12 +229,15 @@ class ChangePasswordView(GenericAPIView):
         new_password = serializer.validated_data['new_password']
         user = request.user
 
+        # Verify old password
         if not user.check_password(old_password):
             return Response({'error': 'Old password is incorrect'}, status=400)
 
+        # Validate new password against Django's password validators
         try:
             validate_password(new_password, user=user)
         except DjangoValidationError as e:
+            # Re-raise as DRF ValidationError to return appropriate error messages
             raise ValidationError({'new_password': list(e.messages)})
 
         user.set_password(new_password)
@@ -214,3 +245,50 @@ class ChangePasswordView(GenericAPIView):
 
         full_name = f"{user.first_name} {user.last_name}".strip()
         return Response({'message': 'Password changed successfully', 'full_name': full_name}, status=200)
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Custom serializer for obtaining JWT tokens, allowing authentication
+    with email and password instead of username and password.
+    """
+    email = serializers.EmailField(write_only=True)
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        fields = ['email', 'password'] # Explicitly define fields for clarity, though not strictly necessary here
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+
+        # Authenticate user using email and password
+        user = authenticate(request=self.context.get('request'), username=email, password=password)
+
+        if not user:
+            raise serializers.ValidationError("Invalid credentials")
+
+        # Get refresh token for the authenticated user
+        refresh = self.get_token(user)
+
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': {  # Include basic user information in the response
+                'id': user.id,
+                'email': user.email,
+                'username': user.username,
+            }
+        }
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Custom JWT token obtain view that uses CustomTokenObtainPairSerializer.
+    This allows logging in with email and password.
+    """
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+class CustomRegisterView(RegisterView):
+    serializer_class = CustomRegisterSerializer

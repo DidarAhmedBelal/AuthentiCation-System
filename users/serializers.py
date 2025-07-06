@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import User
-
+from dj_rest_auth.registration.serializers import RegisterSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -52,21 +52,19 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 
+# serializers.py
+
 class LoginSerializer(serializers.Serializer):
-    """
-    Serializer for user login.
-    Validates username and password using Django's authenticate function.
-    """
-    username = serializers.CharField()
+    email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        username = data.get('username')
+        email = data.get('email')
         password = data.get('password')
 
-        user = authenticate(username=username, password=password)
+        user = authenticate(username=email, password=password)  # `username=email` is correct here
         if not user:
-            raise serializers.ValidationError("Invalid username or password.")
+            raise serializers.ValidationError("Invalid email or password.")
         if not user.is_active:
             raise serializers.ValidationError("Account is inactive.")
 
@@ -140,3 +138,8 @@ class ChangePasswordSerializer(serializers.Serializer):
 class ChangePasswordResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
     full_name = serializers.CharField()
+
+
+class CustomRegisterSerializer(RegisterSerializer):
+    email = serializers.EmailField(required=True)
+    username = serializers.CharField(required=True)
