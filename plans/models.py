@@ -1,5 +1,7 @@
+# plans/models.py
 from django.db import models
 from django.conf import settings
+from chat.models import Chat
 
 class Plan(models.Model):
     PLAN_TYPE_CHOICES = [
@@ -19,6 +21,13 @@ class Plan(models.Model):
     time = models.TimeField(blank=True, null=True)
     is_pinned = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    chat = models.OneToOneField(Chat, null=True, blank=True, on_delete=models.SET_NULL, related_name='plan')
 
     def __str__(self):
         return f"{self.title} ({self.get_plan_type_display()}) on {self.date} at {self.time}"
+
+    def can_user_create_more_plans(self):
+        subscription = getattr(self.user, 'subscription', None)
+        if subscription and subscription.is_active:
+            return self.user.plans.count() < subscription.max_plans
+        return self.user.plans.count() < 10

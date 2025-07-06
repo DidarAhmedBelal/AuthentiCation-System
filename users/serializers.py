@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from .models import User
+from users.models import User
 from dj_rest_auth.registration.serializers import RegisterSerializer
 
 
@@ -143,3 +143,18 @@ class ChangePasswordResponseSerializer(serializers.Serializer):
 class CustomRegisterSerializer(RegisterSerializer):
     email = serializers.EmailField(required=True)
     username = serializers.CharField(required=True)
+
+
+class ErrorResponseSerializer(serializers.Serializer):
+    error = serializers.CharField()
+
+    class Meta:
+        ref_name = "UsersErrorResponse"
+
+
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User  # or get_user_model()
+        fields = ['id', 'username', 'email']  # adjust as needed

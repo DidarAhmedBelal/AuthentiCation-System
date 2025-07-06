@@ -18,8 +18,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Frontend URL for email links, etc.
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
+
 # CORS settings
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173', cast=Csv())
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default=FRONTEND_URL, cast=Csv())
 
 # SECURITY
 SECRET_KEY = config('SECRET_KEY')
@@ -29,12 +32,8 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,.vercel.app
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
-
-# print("dsjkfldsfkds")
-
 # Applications
 INSTALLED_APPS = [
-    # Django core apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,28 +42,25 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
 
-    # Third-party apps
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_yasg',
 
-    'dj_rest_auth',
-    'dj_rest_auth.registration',
-    'djoser',
+    'djoser',  # Only djoser for auth
 
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',  
-    # Your custom apps
+    'allauth.socialaccount.providers.google',
+
     'users',
     'plans',
     'chat',
     'about',
+    'payments',
 ]
-
 
 # Authentication Backends
 AUTHENTICATION_BACKENDS = [
@@ -84,30 +80,12 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         'AUTH_PARAMS': {'access_type': 'offline'},
     },
-    # 'facebook': {
-    #     'APP': {
-    #         'client_id': config('FB_CLIENT_ID', default=''),
-    #         'secret': config('FB_CLIENT_SECRET', default=''),
-    #         'key': ''
-    #     },
-    #     'METHOD': 'oauth2'
-    # },
-    # 'apple': {
-    #     'APP': {
-    #         'client_id': config('APPLE_CLIENT_ID', default=''),
-    #         'secret': config('APPLE_SECRET', default=''),
-    #         'key': ''
-    #     },
-    # }
 }
-
-# print(SOCIALACCOUNT_PROVIDERS)
-
 
 # Middleware
 MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'allauth.account.middleware.AccountMiddleware', 
+    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -117,6 +95,22 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Djoser config (password reset URLs, serializers, etc.)
+DJOSER = {
+    'SEND_ACTIVATION_EMAIL': False,
+    'PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND': True,
+    'USER_ID_FIELD': 'id',
+    'LOGIN_FIELD': 'username',
+
+    'PASSWORD_RESET_CONFIRM_URL': f'/password/reset/confirm/{{uid}}/{{token}}',
+    'USERNAME_RESET_CONFIRM_URL': f'/email/reset/confirm/{{uid}}/{{token}}',
+
+    'SERIALIZERS': {
+        'user_create': 'users.serializers.CustomRegisterSerializer',
+        'user': 'users.serializers.UserDetailSerializer',
+    },
+}
 
 # JWT settings
 REST_USE_JWT = True
@@ -139,33 +133,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    # 'DEFAULT_THROTTLE_CLASSES': [
-    #     'rest_framework.throttling.UserRateThrottle',
-    #     'rest_framework.throttling.AnonRateThrottle',
-    # ],
-    # 'DEFAULT_THROTTLE_RATES': {
-    #     'anon': '5/minute',
-    #     'user': '10/minute',
-    # }
 }
-
-# Djoser config
-DJOSER = {
-    'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}/',
-    'USERNAME_RESET_CONFIRM_URL': 'email/reset/confirm/{uid}/{token}/',
-    'SEND_ACTIVATION_EMAIL': False,
-    'PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND': True,
-    'USER_ID_FIELD': 'id',
-    'LOGIN_FIELD': 'username',
-}
-
-
-
-
-REST_AUTH_REGISTER_SERIALIZERS = {
-    'REGISTER_SERIALIZER': 'users.serializers.CustomRegisterSerializer',
-}
-
 
 # Email settings
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
@@ -210,19 +178,10 @@ TEMPLATES = [
 
 # Password validators
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {'min_length': 8}
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
 
 # Internationalization
@@ -236,3 +195,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Static files storage for production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Stripe keys
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY')
