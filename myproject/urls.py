@@ -27,8 +27,8 @@ urlpatterns = [
     path('api/', include('api.urls')),
 
     # Auth using Djoser with JWT
-    path('auth/', include('djoser.urls')),
-    path('auth/', include('djoser.urls.jwt')),  # OR use .authtoken if not using JWT
+    path('api/', include('djoser.urls')),
+    path('api/jwt/', include('djoser.urls.jwt')),  # OR use .authtoken if not using JWT
 
 
     path('accounts/', include('allauth.socialaccount.urls')),  # enables /accounts/google/login/

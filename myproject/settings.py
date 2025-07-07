@@ -21,6 +21,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Frontend URL for email links, etc.
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 
+
+OPENAI_API_KEY = config("OPENAI_API_KEY")
+
 # CORS settings
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default=FRONTEND_URL, cast=Csv())
 
@@ -103,14 +106,26 @@ DJOSER = {
     'USER_ID_FIELD': 'id',
     'LOGIN_FIELD': 'username',
 
-    'PASSWORD_RESET_CONFIRM_URL': f'/password/reset/confirm/{{uid}}/{{token}}',
-    'USERNAME_RESET_CONFIRM_URL': f'/email/reset/confirm/{{uid}}/{{token}}',
+    # Frontend URLs for email links
+    'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}/',
+    'USERNAME_RESET_CONFIRM_URL': 'email/reset/confirm/{uid}/{token}/',
 
     'SERIALIZERS': {
         'user_create': 'users.serializers.CustomRegisterSerializer',
         'user': 'users.serializers.UserDetailSerializer',
     },
+
+    # Allow public access to password reset & confirmation
+    
 }
+
+
+
+# AI Configurations
+AI_API_URL = "http://localhost:11434/api/generate"
+AI_MODEL_NAME = "llama3"
+AI_STREAMING = False
+
 
 # JWT settings
 REST_USE_JWT = True
@@ -131,7 +146,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ),
 }
 
@@ -197,6 +212,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Stripe keys
-STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
+# Stripe keys
 STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
 STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY')
+STRIPE_PRICE_ID = config('STRIPE_PRICE_ID') 
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')

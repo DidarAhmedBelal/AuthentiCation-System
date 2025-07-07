@@ -1,3 +1,5 @@
+# Updated version using subscription_id instead of price_id
+
 import stripe
 from django.conf import settings
 from django.utils import timezone
@@ -9,7 +11,6 @@ from drf_yasg import openapi
 
 from .models import Subscription
 from .serializers import (
-    CheckoutRequestSerializer,
     StripeSessionResponseSerializer,
     MessageResponseSerializer,
     ErrorResponseSerializer,
@@ -23,18 +24,25 @@ class CreateCheckoutSessionView(APIView):
 
     @swagger_auto_schema(
         operation_description="Create a Stripe Checkout Session for a subscription.",
-        request_body=CheckoutRequestSerializer,
+        manual_parameters=[
+            openapi.Parameter(
+                'subscription_id', openapi.IN_QUERY,
+                description="Stripe Price ID of the subscription plan",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
         responses={
             200: StripeSessionResponseSerializer,
             400: ErrorResponseSerializer,
         }
     )
     def post(self, request):
-        serializer = CheckoutRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
         user = request.user
-        price_id = serializer.validated_data.get("price_id", settings.STRIPE_PRICE_ID)
+        price_id = request.query_params.get('subscription_id')
+
+        if not price_id:
+            return Response({'error': 'subscription_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         subscription, _ = Subscription.objects.get_or_create(user=user)
 
@@ -52,8 +60,8 @@ class CreateCheckoutSessionView(APIView):
                     'quantity': 1,
                 }],
                 mode='subscription',
-                success_url='https://yourfrontend.com/success?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url='https://yourfrontend.com/cancel',
+                success_url=f'{settings.FRONTEND_URL}/success?session_id={{CHECKOUT_SESSION_ID}}',
+                cancel_url=f'{settings.FRONTEND_URL}/cancel',
             )
 
             return Response({'sessionId': checkout_session.id}, status=status.HTTP_200_OK)

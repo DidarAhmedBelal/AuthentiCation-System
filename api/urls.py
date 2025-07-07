@@ -16,6 +16,7 @@ from chat.views import (
     ChatDetailView,
     MessageListCreateView,
     MessageDetailView,
+    chat_with_assistant
 )
 from plans.views import PlanListCreateView, PlanDetailView
 from about.views import AboutView, AboutCreateView
@@ -24,6 +25,8 @@ from payments.views import (
     StripeWebhookView, CancelSubscriptionView
 
 )
+
+
 
 router = DefaultRouter()
 router.register('users', UserList, basename='user-admin')
@@ -63,6 +66,8 @@ urlpatterns = [
     path('create-checkout-session/', CreateCheckoutSessionView.as_view(), name='create_checkout_session'),
     path('stripe-webhook/', StripeWebhookView.as_view(), name='stripe_webhook'),
     path('cancel-subscription/', CancelSubscriptionView.as_view(), name='cancel-subscription'),
+    path("bot/<int:chat_id>/", chat_with_assistant, name="chat-with-assistant"),
+
 
     
 ]
