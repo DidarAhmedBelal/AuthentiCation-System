@@ -1,64 +1,37 @@
 import requests
-from django.contrib.auth import get_user_model
-from chat.models import Message
-from django.conf import settings
+from langchain_ollama import ChatOllama
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from .models import Message
 
-
-def get_or_create_bot_user():
-    User = get_user_model()
-    bot, _ = User.objects.get_or_create(
-        username="AI_Bot",
-        defaults={
-            "email": "bot@example.com",
-            "password": User.objects.make_random_password()
-        }
-    )
-    return bot
-
-
-
-AI_URL = settings.AI_API_URL
-AI_MODEL = settings.AI_MODEL_NAME
-AI_STREAM = settings.AI_STREAMING
-
+# Setup your LLM client
+llm = ChatOllama(model="llama3.2:3b", base_url="http://localhost:11434")
+output_parser = StrOutputParser()
 
 def generate_response_from_chat(chat, user, user_input):
-    # Save user message
-    Message.objects.create(chat=chat, sender=user, content=user_input)
+    """
+    Generate a dynamic AI response using LangChain Ollama.
+    You can pass in chat context (messages) if you want.
+    """
 
-    # Get last 10 messages for context
-    messages = Message.objects.filter(chat=chat).order_by('-timestamp')[:10][::-1]
+    # Fetch last messages of this chat for context, ordered oldest->newest
+    recent_messages = Message.objects.filter(chat=chat).order_by('timestamp')[:10]
 
-    # Format prompt
-    prompt = "\n".join([
-        f"User: {m.content}" if m.sender == user else f"Assistant: {m.content}"
-        for m in messages
-    ]) + f"\nUser: {user_input}\nAssistant:"
+    # Build messages list in LangChain format (role, content)
+    messages = [("system", "You are a helpful assistant specialized in sports coaching.")]
 
-    # Call Ollama API
-    try:
-        response = requests.post(
-            "http://localhost:11434/api/generate",
-            json={
-                "model": "llama3",
-                "prompt": prompt,
-                "stream": False
-            }
-        )
-        if response.status_code != 200:
-            error_message = response.json().get("error", "Unknown error")
-            return f"AI response failed: {error_message}", prompt
+    for msg in recent_messages:
+        role = "assistant" if msg.sender.username == "chatbot" else "user"
+        messages.append((role, msg.content))
 
-        ai_reply = response.json()["response"]
+    # Append current user input as last user message
+    messages.append(("user", user_input))
 
-        # Save AI reply
-        Message.objects.create(
-            chat=chat,
-            sender=get_or_create_bot_user(),
-            content=ai_reply
-        )
+    # Build prompt and invoke LLM chain
+    prompt = ChatPromptTemplate.from_messages(messages)
+    chain = prompt | llm | output_parser
 
-        return ai_reply, prompt + ai_reply
+    # Get the response string
+    response = chain.invoke({})
 
-    except requests.exceptions.RequestException as e:
-        return f"Request to AI failed: {str(e)}", prompt
+    return response, messages  # you can return chat log or whatever you want

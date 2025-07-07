@@ -1,4 +1,4 @@
-# Updated version using subscription_id instead of price_id
+# payments/views.py
 
 import stripe
 from django.conf import settings
@@ -26,7 +26,7 @@ class CreateCheckoutSessionView(APIView):
         operation_description="Create a Stripe Checkout Session for a subscription.",
         manual_parameters=[
             openapi.Parameter(
-                'subscription_id', openapi.IN_QUERY,
+                'price_id', openapi.IN_QUERY,
                 description="Stripe Price ID of the subscription plan",
                 type=openapi.TYPE_STRING,
                 required=True
@@ -39,10 +39,10 @@ class CreateCheckoutSessionView(APIView):
     )
     def post(self, request):
         user = request.user
-        price_id = request.query_params.get('subscription_id')
+        price_id = request.query_params.get('price_id')  # ✅ Fixed
 
-        if not price_id:
-            return Response({'error': 'subscription_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not price_id:  # ✅ Recommended to add this check
+            return Response({'error': 'price_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         subscription, _ = Subscription.objects.get_or_create(user=user)
 
@@ -101,6 +101,7 @@ class StripeWebhookView(APIView):
                     subscription.stripe_subscription_id = subscription_id
                     subscription.is_active = True
                     subscription.current_period_end = timezone.now() + timezone.timedelta(days=30)
+                    subscription.max_plans = 10  
                     subscription.save()
                 except Subscription.DoesNotExist:
                     pass
