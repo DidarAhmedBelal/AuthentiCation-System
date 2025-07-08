@@ -45,9 +45,13 @@ urlpatterns = [
     path('chats/', ChatListCreateView.as_view(), name='chat-list-create'),
     path('chats/<int:pk>/', ChatDetailView.as_view(), name='chat-detail'),
 
-    # 💬 Messages
+    # 💬 Messages (default flat endpoints — optional)
     path('messages/', MessageListCreateView.as_view(), name='message-list-create'),
     path('messages/<int:pk>/', MessageDetailView.as_view(), name='message-detail'),
+
+    # 💬 Messages under Plan (nested)
+    path('plans/<int:plan_id>/messages/', MessageListCreateView.as_view(), name='plan-message-list-create'),
+    path('plans/<int:plan_id>/messages/<int:pk>/', MessageDetailView.as_view(), name='plan-message-detail'),
 
     # 🤖 AI Chatbot
     path('chat-respond/', ChatRespondAPIView.as_view(), name='chat-respond'),

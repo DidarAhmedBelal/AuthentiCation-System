@@ -23,6 +23,7 @@ django-rest-swagger==2.2.0
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.0
 djoser==2.3.1
+drf-nested-routers==0.94.2
 drf-spectacular==0.28.0
 drf-yasg==1.21.10
 frozenlist==1.7.0
@@ -65,10 +66,13 @@ packaging==24.2
 pillow==11.3.0
 propcache==0.3.2
 psycopg2-binary==2.9.10
+pyasynchat==1.0.4
+pyasyncore==1.0.4
 pycparser==2.22
 pydantic==2.11.7
 pydantic-settings==2.10.1
 pydantic_core==2.33.2
+pyftpdlib==2.0.1
 Pygments==2.19.2
 PyJWT==2.9.0
 PySocks==1.7.1

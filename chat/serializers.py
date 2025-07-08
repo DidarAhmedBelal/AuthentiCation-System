@@ -58,3 +58,8 @@ class ErrorResponseSerializer(serializers.Serializer):
     error = serializers.CharField()
     class Meta: 
         ref_name = "paymentsErrorResponse"
+
+class ChatBotResponseSerializer(serializers.Serializer):
+    user = UserSerializer()
+    user_message = serializers.CharField()
+    bot_response = MessageSerializer()

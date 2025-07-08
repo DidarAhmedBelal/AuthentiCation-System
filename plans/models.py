@@ -1,4 +1,3 @@
-# plans/models.py
 from django.db import models
 from django.conf import settings
 from chat.models import Chat
@@ -14,6 +13,8 @@ class Plan(models.Model):
         on_delete=models.CASCADE,
         related_name='plans'
     )
+    chat = models.OneToOneField(Chat, on_delete=models.CASCADE, null=True, blank=True, related_name='plan')
+
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     plan_type = models.CharField(max_length=10, choices=PLAN_TYPE_CHOICES, default='chat')
@@ -21,7 +22,6 @@ class Plan(models.Model):
     time = models.TimeField(blank=True, null=True)
     is_pinned = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    chat = models.OneToOneField(Chat, null=True, blank=True, on_delete=models.SET_NULL, related_name='plan')
 
     def __str__(self):
         return f"{self.title} ({self.get_plan_type_display()}) on {self.date} at {self.time}"
