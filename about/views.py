@@ -14,6 +14,7 @@ class AboutView(generics.RetrieveUpdateAPIView):
             return About.objects.create(user=user)
 
 class AboutCreateView(generics.CreateAPIView):
+    queryset = About.objects.all() 
     serializer_class = AboutSerializer
     permission_classes = [permissions.IsAuthenticated]
 
