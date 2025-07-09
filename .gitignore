@@ -1,0 +1,11 @@
+.env
+__pycache__
+task_env
+
+Google.json
+
+
+
+db.sqlite3
+
+venv
